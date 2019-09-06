@@ -1,0 +1,8 @@
+prefix=/home/ri/soonrobo/install
+
+Name: turtlebot3_slam
+Description: Description of turtlebot3_slam
+Version: 1.2.1
+Cflags: -I/home/ri/soonrobo/install/include
+Libs: -L/home/ri/soonrobo/install/lib 
+Requires: roscpp sensor_msgs

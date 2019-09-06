@@ -1,0 +1,8 @@
+prefix=/home/ri/soonrobo/devel
+
+Name: laser
+Description: Description of laser
+Version: 0.0.0
+Cflags: -I/home/ri/soonrobo/devel/include
+Libs: -L/home/ri/soonrobo/devel/lib 
+Requires: 
