@@ -1,0 +1,8 @@
+prefix=/home/ri/soonrobo/install
+
+Name: moter_pub
+Description: Description of moter_pub
+Version: 0.0.1
+Cflags: -I/home/ri/soonrobo/install/include
+Libs: -L/home/ri/soonrobo/install/lib -lmoter_pub
+Requires: roscpp std_msgs geometry_msgs message_runtime

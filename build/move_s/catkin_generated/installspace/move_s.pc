@@ -1,0 +1,8 @@
+prefix=/home/ri/soonrobo/install
+
+Name: move_s
+Description: Description of move_s
+Version: 0.1.0
+Cflags: 
+Libs: -L/home/ri/soonrobo/install/lib 
+Requires: 
