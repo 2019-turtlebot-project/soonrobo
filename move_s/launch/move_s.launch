@@ -1,0 +1,13 @@
+<launch>
+
+  <group ns="simmove">
+    <node pkg="simmove" name="simmove" type="simmove"/>
+  </group>
+
+  <group ns="turtlesim2">
+    <node pkg="telemove" name="telemove" type="telemove"/>
+  </group>
+
+
+
+</launch>
