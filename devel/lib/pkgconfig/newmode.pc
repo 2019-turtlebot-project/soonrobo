@@ -1,8 +1,0 @@
-prefix=/home/ri/soonrobo/devel
-
-Name: newmode
-Description: Description of newmode
-Version: 0.0.1
-Cflags: -I/home/ri/soonrobo/devel/include
-Libs: -L/home/ri/soonrobo/devel/lib 
-Requires: 

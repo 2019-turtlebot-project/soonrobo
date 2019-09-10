@@ -1,8 +1,0 @@
-prefix=/home/ri/soonrobo/install
-
-Name: turtlebot3_description
-Description: Description of turtlebot3_description
-Version: 1.2.1
-Cflags: 
-Libs: -L/home/ri/soonrobo/install/lib 
-Requires: urdf xacro

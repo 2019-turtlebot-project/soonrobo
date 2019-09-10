@@ -1,2 +1,0 @@
-xyz linear
-xyz angular
