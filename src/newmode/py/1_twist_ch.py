@@ -3,33 +3,31 @@ import rospy
 from newmode.msg import mode_msg, twist
 from geometry_msgs.msg import Twist
 
-_publishing = False
-_pub = None
 
-def start_publishing():
-    global _pub
-    if _pub is not None:
-        return
-    print("modete2 start")
-    _pub = rospy.Publisher("cmd_vel", Twist, queue_size=10)
+class twist_trans():
+	def __init__(self):
+		self._pub = rospy.Publisher("turtle1/cmd_vel", Twist, queue_size=10)
+		self.pub1 = Twist()
+		self.tw_sub = rospy.Subscriber("/mode_twist", twist, self.callback)
 
-def callback(d):
-    start_publishing()
-    pub1 = Twist()
-    pub1.linear.x = d.linear.x
-    pub1.angular.z = d.angular.z
+	def callback(self,d):
+		
+		
+		self.pub1.linear.x = d.linear.x
+		self.pub1.angular.z = d.angular.z
 
-    print("1")
-    _pub.publish(pub1)
+		print("1")
+		self._pub.publish(self.pub1)
 
-    
-def listener():
 
-    rospy.init_node('twist_ch')
-    rospy.Subscriber("/mode_twist", twist, callback)
-    rospy.spin()
+		
+def main():
+	rospy.init_node('twist_ch')
+	mo=twist_trans()
+	rospy.spin()
+		
 
 if __name__ == '__main__':
-    try:
-    	listener()
-    except rospy.ROSInterruptException: pass
+	try:
+		main()
+	except rospy.ROSInterruptException: pass

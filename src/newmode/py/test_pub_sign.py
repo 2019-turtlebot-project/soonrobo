@@ -7,21 +7,21 @@ from newmode.msg import mode_msg , start, msg_detect, msg_lane, msg_sign
 
 
 def getKey():
-	tty.setraw(sys.stdin.fileno())
-	rlist, _, _ = select.select([sys.stdin], [], [], 0.1)
-	if rlist:
-		key = sys.stdin.read(1)
-	else:
-		key = ''
+    tty.setraw(sys.stdin.fileno())
+    rlist, _, _ = select.select([sys.stdin], [], [], 0.1)
+    if rlist:
+        key = sys.stdin.read(1)
+    else:
+        key = ''
 
-	termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
-	return key
+    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+    return key
 
 if __name__=="__main__":
 
 	settings = termios.tcgetattr(sys.stdin)
-    
-	rospy.init_node('test_pub')
+
+	rospy.init_node('test_pub_sign')
 	pub = rospy.Publisher('/lane_msg', msg_lane, queue_size=10)
 	pub_det = rospy.Publisher('/det_msg',msg_detect, queue_size = 10)
 	pub_start = rospy.Publisher('/start',start, queue_size =10)
@@ -30,30 +30,10 @@ if __name__=="__main__":
 	sign_msg = msg_sign()
 	det=msg_detect()
 	starting = start()
-    
 
 	try:
 		while(1):
 			key = getKey()
-			if key == 'q':
-				lane.sw = True
-				lane.angle = 0
-				print("q")
-			elif key == 'w':
-				lane.sw = False
-				print("w")
-			elif key == 'a':
-				det.bar = True
-				print("a")
-			elif key == 's':
-				det.bar = False
-				print("s")
-			elif key == 'z':
-				det.traffic_light = True
-				print("z")
-			elif key == 'x':
-				det.traffic_light = False
-				print("x")     
 			if key == '1':
 				print('PARKING SIGN')      
 				sign_msg.data = 1
@@ -64,9 +44,9 @@ if __name__=="__main__":
 				sign_msg.name = 'LEFT SIGN'
 				#self.signpub.publish(self.sign_msg)
 			elif key == '3':
-				print('RIGHT SIGN')     
+				print('RIGLT SIGN ')     
 				sign_msg.data = 3
-				sign_msg.name = 'RIGHT SIGN'
+				sign_msg.name = 'RIGLT SIGN '
 				#self.signpub.publish(self.sign_msg)
 			elif key == '4':
 				print('TUNNEL SIGN')      
@@ -96,6 +76,8 @@ if __name__=="__main__":
 			elif key == '0':
 				print('None')
 				sign_msg.data = 0
+				
+				#self.signpub.publish(self.sign_msg)
 			else :
 				if (key == '\x03'):
 					break

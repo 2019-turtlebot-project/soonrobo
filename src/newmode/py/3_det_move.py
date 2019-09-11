@@ -36,7 +36,7 @@ class det():
 
     def stop(self):
             self.vel_tw.linear.x = 0
-            self.vel_tw.angular.z = 1
+            self.vel_tw.angular.z = 0
 
 
 

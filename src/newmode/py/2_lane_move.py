@@ -23,21 +23,21 @@ class test():
             #print(self.mode)
             rospy.loginfo('angle: %s',msg.angle)
             if msg.angle >0:
-                self.new_angle = 90-msg.angle
+                self.new_angle = msg.angle
             elif msg.angle <0:
-                self.new_angle = -90-msg.angle
+                self.new_angle = msg.angle
             elif msg.angle == 0 :
                 self.new_angle = 0  
             print("  ",self.new_angle)
             self.lane_go(self.new_angle)
-            self.twistpub.publish(self.vel_tw)
+            
             
     def lane_go(self,an):
         print("go")
-        speed = (an*np.pi/180)/10
+        speed = an/10
         self.vel_tw.linear.x=0.1
         self.vel_tw.angular.z = speed
-        
+        self.twistpub.publish(self.vel_tw)
 
 
 if __name__ == '__main__':

@@ -11,10 +11,10 @@
 
   <node pkg="turtlebot3_bringup" type="turtlebot3_diagnostics" name="turtlebot3_diagnostics" output="screen"/>
  
-  <node pkg="newmode" name="1_twist_ch.py" type="1_twist_ch.py"/>
-  <node pkg="newmode" name="2_lane_move.py" type="2_lane_move.py"/>
-  <node pkg="newmode" name="5_mode_ch.py" type="5_mode_ch.py"/>
-  <node pkg="newmode" name="6_lane_1.py" type="6_lane_1.py"/>
+  <node pkg="newmode" name="twist_ch" type="1_twist_ch.py"/>
+  <node pkg="newmode" name="lane_move" type="2_lane_move.py"/>
+  <node pkg="newmode" name="mode_ch" type="5_mode_ch.py"/>
+  <node pkg="newmode" name="lane_1" type="6_lane_1.py"/>
  
 
 

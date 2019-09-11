@@ -57,7 +57,8 @@ find_package(catkin REQUIRED COMPONENTS
    msg_lane.msg
    twist.msg
    xyz.msg
-   msg_sine.msg
+   msg_sign.msg
+   msg_laser.msg
  )
 
 ## Generate services in the 'srv' folder

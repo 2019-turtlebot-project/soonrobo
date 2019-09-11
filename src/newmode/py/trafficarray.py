@@ -3,16 +3,17 @@ import cv2
 import rospy
 import os
 import numpy as np
-from newmode.msg import msg_sine
+from newmode.msg import msg_sign
 orb = cv2.ORB_create()
 
 class TrafficSign:
 	def __init__(self):
 		self.POriginal = []
-		self.sine_msg = msg_sine()
-		self.sinepub = rospy.Publisher('/sine_msg', msg_sine, queue_size=10)
+		self.sign_msg = msg_sign()
+		self.signpub = rospy.Publisher('/sign_msg', msg_sign, queue_size=10)
 		
 	def set(self):
+		self.signtime = 4
 		self.out = []
 		self.result = [0,0,0,0,0,0,0,0]
 		self.num = 1
@@ -24,15 +25,16 @@ class TrafficSign:
 		self.Porbkp = []
 		self.Porbdes = []
 		
+		
 		#open to match trafficsigns
-		self.P0Color = cv2.imread("/home/j/traffic/parkingimg1.jpg", cv2.IMREAD_COLOR)
-		self.P1Color = cv2.imread("/home/j/traffic/leftsign.jpg", cv2.IMREAD_COLOR)
-		self.P2Color = cv2.imread("/home/j/traffic/tunnel1.jpg", cv2.IMREAD_COLOR)
-		self.P3Color = cv2.imread("/home/j/traffic/rl1.jpg", cv2.IMREAD_COLOR)
-		self.P4Color = cv2.imread("/home/j/traffic/cross2.jpg", cv2.IMREAD_COLOR)
-		self.P5Color = cv2.imread("/home/j/traffic/bar4.jpg", cv2.IMREAD_COLOR)
-		self.P6Color = cv2.imread("/home/j/traffic/avoid5.jpg", cv2.IMREAD_COLOR)
-		self.P7Color = cv2.imread("/home/j/traffic/cantgo1.jpg", cv2.IMREAD_COLOR)
+		self.P0Color = cv2.imread("/home/ri/soonrobo/src/newmode/SIGNsample/parkSIGN1.jpg", cv2.IMREAD_COLOR)
+		self.P1Color = cv2.imread("/home/ri/soonrobo/src/newmode/SIGNsample/leftSIGN.jpg", cv2.IMREAD_COLOR)
+		self.P2Color = cv2.imread("/home/ri/soonrobo/src/newmode/SIGNsample/rightSIGN.jpg", cv2.IMREAD_COLOR)
+		self.P3Color = cv2.imread("/home/ri/soonrobo/src/newmode/SIGNsample/tunnelSIGN1.jpg", cv2.IMREAD_COLOR)
+		self.P4Color = cv2.imread("/home/ri/soonrobo/src/newmode/SIGNsample/crossSIGN.jpg", cv2.IMREAD_COLOR)
+		self.P5Color = cv2.imread("/home/ri/soonrobo/src/newmode/SIGNsample/stopSIGN.jpg", cv2.IMREAD_COLOR)
+		self.P6Color = cv2.imread("/home/ri/soonrobo/src/newmode/SIGNsample/avoidSIGN.jpg", cv2.IMREAD_COLOR)
+		self.P7Color = cv2.imread("/home/ri/soonrobo/src/newmode/SIGNsample/dontgoSIGN.jpg", cv2.IMREAD_COLOR)
 		if self.P1Color is None or self.P2Color is None or self.P3Color is None or self.P4Color is None or self.P5Color is None or self.P6Color is None or self.P7Color is None or self.P0Color is None:
 			print('no image')
 			return 0		
@@ -84,7 +86,7 @@ class TrafficSign:
 	def orb(self, image, imageC):
 		#imgdrawkp = None
 		self.imgorbkp, self.imgorbdes = orb.detectAndCompute(imageC, None)
-		#imgdrawkp = cv2.drawKeypoints(image, self.imgorbkp, imgdrawkp,(0,0,255), flags=0)	
+		#imgdrawkp = cv2.drawKeypoints(image, self.imgorbkp, im datagdrawkp,(0,0,255), flags=0)	
 
 	#FLANN
 	def flann(self, image, factor):
@@ -99,28 +101,29 @@ class TrafficSign:
 		index_params = dict(algorithm=FLANN_INDEX_LSH, table_number=6, key_size=12, multi_probe_levle=1) #orb
 		search_params = dict(checks=50) #if checks value up? slow
 		flann = cv2.FlannBasedMatcher(index_params, search_params)
-		#try:
-		for des in self.Signsdes:
-			matches.append(flann.knnMatch(des, self.imgorbdes, k=2))
+		try:
+			for des in self.Signsdes:
+				matches.append(flann.knnMatch(des, self.imgorbdes, k=2))
 
-		for match in matches: 				
-			try:			
-				for m, n in match:
-					if m.distance < factor*n.distance:
-						gmatch[sign].append(m)	
-			except:
-				print('no mathch')
+			for match in matches: 					
+				try:			
+					for m, n in match:
+						if m.distance < factor*n.distance:
+							gmatch[sign].append(m)	
+				except:
+					print('no mathch')
 
-			if len(gmatch[sign]) > 10:
-				self.out.append(sign)
-				matching = cv2.drawMatches(self.PResize[sign], self.Signskp[sign], image, self.imgorbkp, gmatch[sign], matching, flags=2)
-			else:
-				self.out.append('')
-				matching = image	
-			sign += 1
-		print(self.out)
-		cv2.imshow('match', matching)
-			 			
+				if len(gmatch[sign]) > 15:
+					self.out.append(sign)
+					matching = cv2.drawMatches(self.PResize[sign], self.Signskp[sign], image, self.imgorbkp, gmatch[sign], matching, flags=2)
+				else:
+					self.out.append('')
+					matching = image	
+				sign += 1
+			print(self.out)
+			cv2.imshow('match', matching)
+		except:
+			print('error pop')		 			
 	def findsign(self):
 		while True:
 			if '' in self.out:
@@ -159,41 +162,65 @@ class TrafficSign:
 
 		else:
 			print(len(self.out))
-		if self.result[0] > 8:
-			print('PARKING SIGN')
-			self.sine_msg.data = 'c'
+			
+		if self.result[0] > self.signtime:
+			print('PARKING SIGN')      
+			self.sign_msg.data = 1
+			self.sign_msg.name = 'PARKING SIGN'
+			#self.signpub.publish(self.sign_msg)
 			self.num = 1
-		elif self.result[1] > 8:
-			print('GO LEFT SIGN')
-			self.sine_msg.data = 'g'
-			print("sine_msg =".format(self.sine_msg.data))
-			self.sinepub.publish(self.sine_msg)
+		elif self.result[1] > self.signtime:
+			print('LEFT SIGN')      
+			self.sign_msg.data = 2
+			self.sign_msg.name = 'LEFT SIGN'
+			#self.signpub.publish(self.sign_msg)
 			self.num = 1
-		elif self.result[2] > 8:
-			print('TUNNEL SIGN')
+		elif self.result[2] > self.signtime:
+			print('RIGLT SIGN ')     
+			self.sign_msg.data = 3
+			self.sign_msg.name = 'RIGLT SIGN '
+			#self.signpub.publish(self.sign_msg)
 			self.num = 1
-		elif self.result[3] > 8:
-			print('RIGLEF SIGN')
+		elif self.result[3] > self.signtime:
+			print('TUNNEL SIGN')      
+			self.sign_msg.data = 4
+			self.sign_msg.name = 'TUNNEL SIGN '
+			#self.signpub.publish(self.sign_msg)
+			
 			self.num = 1
-		elif self.result[4] > 8:
-			print('CROSS SIGN')
+		elif self.result[4] > self.signtime:
+			print('CROSS SIGN')        
+			self.sign_msg.data = 5
+			self.sign_msg.name = 'CROSS SIGN'
+			#self.signpub.publish(self.sign_msg)
 			self.num = 1
-		elif self.result[5] > 8:
+		elif self.result[5] > self.signtime:
 			print('TRAFBAR SIGN')
+			self.sign_msg.data = 6
+			self.sign_msg.name = 'TRAFBAR SIGN'
+			#self.signpub.publish(self.sign_msg)
 			self.num = 1
-		elif self.result[6] > 8:
+		elif self.result[6] > self.signtime:
 			print('AVOID SIGN')
+			self.sign_msg.data = 7
+			self.sign_msg.name = 'AVOID SIGN'
+			#self.signpub.publish(self.sign_msg)
 			self.num = 1
-		elif self.result[7] > 8:
+		elif self.result[7] > self.signtime:
 			print('CANTGO SIGN')
+			self.sign_msg.data = 8
+			self.sign_msg.name = 'CANTGO SIGN'
+			#self.signpub.publish(self.sign_msg)
 			self.num = 1
-		
+		else:
+			self.sign_msg.data = 0
+		self.signpub.publish(self.sign_msg)
 
 def main():
 	rospy.init_node('traff')
 	t = TrafficSign()
 	t.set()
-	cap = cv2.VideoCapture('/home/j/traffic/test3.mp4')
+	cap = cv2.VideoCapture("/home/ri/traffic/test3.mp4")
 	if cap.isOpened():
 		print("success")
 	else:

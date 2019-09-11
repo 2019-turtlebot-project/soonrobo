@@ -4,13 +4,13 @@ import numpy as np
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-from newmode.msg import msg_lane, msg_sign
+from newmode.msg import msg_lane
+from newmode.msg import msg_sign
 
 class Image_class:
     def __init__(self):
         self.bridge = CvBridge()
-        self.angle = msg_lane()
-        self.sign =None
+        self.angle_msg = msg_lane()
         self.line = []
         self.line_md = []
         self.ye_pose = []
@@ -26,9 +26,10 @@ class Image_class:
         self.x2_wh = None
         self.y1_wh = None
         self.y2_wh = None
+        self.sign = None
         self.pub_lane = rospy.Publisher('/lane_msg', msg_lane, queue_size=1)
-        self.signsub = rospy.Subscriber('/sign_msg',msg_sign, self.signmsg)
-    def signmsg(self, msg):
+        self.sub_sign = rospy.Subscriber('/sign_msg',msg_sign, self.signmsg)
+    def signmsg(self,msg):
         self.sign = msg.name
 
     def frame_img(self, image):
@@ -86,17 +87,16 @@ class Image_class:
         self.img_canny = cv2.Canny(blur, 150, 200)
 
     def get_line(self):
-        self.line = cv2.HoughLinesP(self.img_canny, rho=1, theta=np.pi / 180, threshold=50, minLineLength=1,
-                                    maxLineGap=30)
+        self.line = cv2.HoughLinesP(self.img_canny, 1, np.pi / 180, 50, minLineLength=1,maxLineGap=30)
 
         if self.line is not None:
             self.lane_mode = True
-            self.angle.sw = self.lane_mode
-            print(self.angle.sw)
+
         else:
             self.lane_mode = False
-            self.angle.sw = self.lane_mode
-            print(self.angle.sw)
+            
+        self.angle_msg.sw = self.lane_mode
+
 
     def average_slope_intercept(self):
         slope_max_wh = -1
@@ -121,37 +121,45 @@ class Image_class:
                         slope_max_wh = slope_abs
                         self.wh_pose = [x1, y1, x2, y2]
 
+
         if not self.ye_pose == []:
             self.ye_true = True
             #self.angle.wh = self.ye_true
             self.x1_ye, self.y1_ye, self.x2_ye, self.y2_ye = self.ye_pose
+            self.angle_msg.x1_ye = self.x1_ye
+            self.angle_msg.y1_ye = self.y1_ye
+            self.angle_msg.x2_ye = self.x2_ye
+            self.angle_msg.y2_ye = self.y2_ye
             cv2.line(self.img_copy, (self.x1_ye, self.y1_ye), (self.x2_ye, self.y2_ye), [255, 0, 0], 2)
 
         if not self.wh_pose == []:
             self.wh_true = True
             #self.angle.ye = self.ye_true
             self.x1_wh, self.y1_wh, self.x2_wh, self.y2_wh = self.wh_pose
+            self.angle_msg.x1_ye = self.x1_wh
+            self.angle_msg.y1_ye = self.y1_wh
+            self.angle_msg.x2_ye = self.x2_wh
+            self.angle_msg.y2_ye = self.y2_wh
             cv2.line(self.img_copy, (self.x1_wh, self.y1_wh), (self.x2_wh, self.y2_wh), [0, 0, 255], 2)
 
 
     def draw_lines(self):
+        
         if self.lane_mode is True:
-            print(self.angle.sw)
            
-
             if self.ye_true is False and self.wh_true is True:
                 if self.x1_wh == self.x2_wh:
-                    self.angle.angle = 180 * (180.0 / np.pi)
+                    self.angle = 180 * (180.0 / np.pi)
                 else:
-                    self.angle.angle = np.arctan2((self.y1_wh - self.y2_wh) , (self.x1_wh - self.x2_wh)) * (180/np.pi)
+                    self.angle = np.arctan2((self.y1_wh - self.y2_wh) , (self.x1_wh - self.x2_wh)) * (180/np.pi)
                     
                 cv2.line(self.img_copy, (self.x1_wh + 150, self.y1_wh), (self.x2_wh + 150, self.y2_wh), [0, 255, 0], 2)
 
             elif self.wh_true is False and self.ye_true is True:
                 if self.x1_ye == self.x2_ye:
-                    self.angle.angle = 180 * (180.0 / np.pi)
+                    self.angle = 180 * (180.0 / np.pi)
                 else:
-                    self.angle.angle = np.arctan2((self.y1_ye - self.y2_ye) , (self.x1_ye - self.x2_ye)) * (180/np.pi)
+                    self.angle = np.arctan2((self.y1_ye - self.y2_ye) , (self.x1_ye - self.x2_ye)) * (180/np.pi)
               
                 cv2.line(self.img_copy, (self.x1_ye - 150, self.y1_ye), (self.x2_ye - 150, self.y2_ye), [0, 255, 0], 2)
 
@@ -162,10 +170,10 @@ class Image_class:
                 y2 = int((self.y2_wh + self.y1_ye) // 2)
 
                 if x2 == x1:
-                    self.angle.angle = 180 * (180.0 / np.pi)
+                    self.angle = 180 * (180.0 / np.pi)
 
                 else:
-                    self.angle.angle = np.arctan2((y1 - y2) , (x1 - x2)) * (180/np.pi)
+                    self.angle = np.arctan2((y1 - y2) , (x1 - x2)) * (180/np.pi)
 
                 cv2.line(self.img_copy, (x1, y1), (x2, y2), [0, 255, 0], 2)
 
@@ -174,34 +182,37 @@ class Image_class:
                             	
             
     def angle_pub(self):
-        if self.angle.angle <= 180 and self.angle.angle >= -180:
-            if self.angle.angle > 70 and self.angle.angle < 110:
-                self.angle.angle = 90 - self.angle.angle
+        if self.sign != "RIGHT SIGN" and self.sign != "LEFT SIGN" and self.sign != "CANTGO SIGN":
+            if self.angle <= 180 and self.angle >= -180:
+                if self.angle > 70 and self.angle < 110:
+                    self.angle = 90 - self.angle
  
-            else :
-                self.angle.angle = self.angle.angle / 2
-                
-        self.pub_lane.publish(self.angle)
-        rospy.loginfo("%f" %(self.angle.angle))
+                else :
+                    self.angle = self.angle / 2
+
+            self.angle_msg.angle = self.angle        
+            self.pub_lane.publish(self.angle_msg)
+            rospy.loginfo("%f" %(self.angle_msg.angle))
         
-        self.__init__()                
+            self.__init__()                
 
 
 def main():
     pub = rospy.Publisher('/image_raw', Image, queue_size=1)
     #pub_lane = rospy.Publisher('/lane_msg', msg_lane, queue_size=1)
-    rospy.init_node("webcam")
+    rospy.init_node("lane")
     rate = rospy.Rate(10)
     img_now = Image_class()
     cap = cv2.VideoCapture(0)
     cap.set(3, 320)
     cap.set(4, 240)
     if not cap.isOpened():
-        print("open fail video")
+        rospy.loginfo("open fail video")
     while not rospy.is_shutdown():
         ret, frame1 = cap.read()
         frame = cv2.flip(frame1, 0)
         frame = cv2.flip(frame, 1)
+        sign = msg_sign()
 
         if ret:
             img_now.frame_img(frame)
@@ -209,7 +220,7 @@ def main():
             img_now.ye_mask()
             img_now.edge()
             img_now.get_line()
-            if img_now.lane_mode == True and img_now.sign != "RIGHT SIGN" and img_now.sign != "LEFT SIGN":
+            if img_now.lane_mode == True:
                 img_now.average_slope_intercept()
                 img_now.draw_lines()
                 img_now.angle_pub()
